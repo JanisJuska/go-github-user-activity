@@ -33,68 +33,42 @@ func main() {
 
 	json.Unmarshal(body, &theList)
 
-	// jsonFile, err := os.OpenFile("json.json", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	//
-	// defer jsonFile.Close()
-
-	// Happens when someone pushes commits to a repo
-	pushCount := 0
-	// Happens when someone creates a new repo
-	createCount := 0
-	// Triggered when an issue is: opened, closed, edited
-	issueCount := 0
-	// Someone commented on an issue
-	commentedIssueCount := 0
-	// A pull request was: opened, closed, merged
-	pullCount := 0
-	// Someone starred a repo
-	watchCount := 0
-	// A release was published in a repo
-	releaseCount := 0
+	var mappedEvents []events.MappedEvent
 
 	for _, event := range theList {
-		switch event.Type {
-		case "PushEvent":
-			pushCount++
-		case "CreateEvent":
-			createCount++
-		case "IssuesEvent":
-			issueCount++
-		case "IssueCommentEvent":
-			commentedIssueCount++
-		case "PullRequestEvent":
-			pullCount++
-		case "WatchEvent":
-			watchCount++
-		case "ReleaseEvent":
-			releaseCount++
-		}
+		mappedEvents = append(mappedEvents, events.MappedEvent{
+			Type:     event.Type,
+			RepoName: event.Repo.Name,
+		})
 	}
 
-	fmt.Printf("%v:\n", username)
+	counts := make(map[events.MappedEvent]int, len(mappedEvents))
 
-	pushMsg := fmt.Sprintf("--- Pushed commits to a repo: %v times", pushCount)
-	createMsg := fmt.Sprintf("--- Created a new repo: %v times", createCount)
-	issueMsg := fmt.Sprintf("--- Opened, Closed or Edited and Issue: %v times", issueCount)
-	commentIssueMsg := fmt.Sprintf("--- Commented on an issue: %v times", commentedIssueCount)
-	pullMsg := fmt.Sprintf("--- Opened, Closed or Merged a pull request: %v times", pullCount)
-	watchMsg := fmt.Sprintf("--- Starred a repo: %v times", watchCount)
-	releaseMsg := fmt.Sprintf("--- Published a release in a repo: %v times", releaseCount)
+	for _, e := range mappedEvents {
+		key := events.MappedEvent{
+			Type:     e.Type,
+			RepoName: e.RepoName,
+		}
 
-	PrintMessage(pushCount, pushMsg)
-	PrintMessage(createCount, createMsg)
-	PrintMessage(issueCount, issueMsg)
-	PrintMessage(commentedIssueCount, commentIssueMsg)
-	PrintMessage(pullCount, pullMsg)
-	PrintMessage(watchCount, watchMsg)
-	PrintMessage(releaseCount, releaseMsg)
-}
+		counts[key]++
+	}
 
-func PrintMessage(eventCount int, message string) {
-	if eventCount > 0 {
-		fmt.Println(message)
+	for k, v := range counts {
+		switch k.Type {
+		case "PushEvent":
+			fmt.Printf("--- Pushed commits to a %v: %v times\n", k.RepoName, v)
+		case "CreateEvent":
+			fmt.Printf("--- Created a new repo: %v\n", k.RepoName)
+		case "IssuesEvent":
+			fmt.Printf("--- Opened, Closed or Edited and Issue in repo: %v %v times\n", k.RepoName, v)
+		case "IssueCommentEvent":
+			fmt.Printf("--- Commented on an issue in repo: %v  %v times\n", k.RepoName, v)
+		case "PullRequestEvent":
+			fmt.Printf("--- Opened, Closed or Merged a pull request in repo: %v %v times\n", k.RepoName, v)
+		case "WatchEvent":
+			fmt.Printf("--- Starred a repo: %v\n", k.RepoName)
+		case "ReleaseEvent":
+			fmt.Printf("--- Published a release in a repo: %v\n", k.RepoName)
+		}
 	}
 }
