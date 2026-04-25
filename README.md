@@ -16,7 +16,7 @@ A simple command-line tool written in Go that fetches and summarizes a GitHub us
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/github-user-activity.git
+git clone https://github.com/JanisJuska/github-user-activity.git
 cd github-user-activity
 ```
 
